@@ -1,0 +1,22 @@
+<project name="SchemaInstallUtils" basedir=".">
+
+  <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
+  <!-- oooooooooooooooooooooooooo  Installation  oooooooooooooooooooooooooo -->
+  <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
+
+  <target name="SchemaInstallUtils-Installation" depends="SchemaInstallUtils/Main-Installation">
+    <ant target="defaultProjectInstall">
+      <property name="project" value="SchemaInstallUtils" />
+    </ant>
+  </target>
+
+  <!-- ooooooooooooooooooooooo  Install Components  ooooooooooooooooooooooo -->
+
+  <target name="SchemaInstallUtils/Main-Installation">
+    <ant target="defaultComponentInstall">
+      <property name="project" value="SchemaInstallUtils" />
+      <property name="component" value="Main" />
+    </ant>
+  </target>
+
+</project>
