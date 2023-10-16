@@ -1,4 +1,4 @@
-package SchemaInstallUtils::Main::Utils; 
+package SchemaInstallUtils::Main::Utils;
 
 use Exporter;
 use DBI;
@@ -11,7 +11,7 @@ sub getDbh {
 
   die "illegal dbVendor: $dbVendor" unless $dbVendor eq 'Oracle' || $dbVendor eq 'Postgres';
 
-  my $dbiDsn = $dbVendor eq 'Oracle'? "dbi:Oracle:$dbName" : "dbiDsn=dbi:Pg:dbname=$dbName;host=$host";
+  my $dbiDsn = $dbVendor eq 'Oracle'? "dbi:Oracle:$dbName" : "dbi:Pg:dbname=$dbName;host=$host";
 
   return DBI->connect($dbiDsn,
 		      $dbLogin,
@@ -29,7 +29,7 @@ sub runSql {
     &runSqlOracle($login, $password, $dbh->{Name}, $filePath, $allowFailures, @params);
   } elsif (lc $dbVendor eq 'postgres') {
     &runSqlPostgres($login, $password, $dbh->{pg_db}, $dbh->{pg_host}, $filePath, $allowFailures, @params);
-  } else { 
+  } else {
     die "Unsupported dbVendor:$dbVendor.";
   }
 }
@@ -68,10 +68,10 @@ sub runSqlOracle {
 
 sub runSqlPostgres {
   my ($login, $password, $dbName, $dbHostname, $fullFile, $allowFailures, @params) = @_;
-  
+
   my $psql_params = "";
   my $connectionString = "postgresql://$login:$password\@$dbHostname/$dbName";
-  
+
   my $cmd;
   if (!$allowFailures) { $psql_params = "-v ON_ERROR_STOP=1"; }
 
