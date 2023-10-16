@@ -11,7 +11,7 @@ sub getDbh {
 
   die "illegal dbVendor: $dbVendor" unless $dbVendor eq 'Oracle' || $dbVendor eq 'Postgres';
 
-  my $dbiDsn = $dbVendor eq 'Oracle'? "dbi:Oracle:$dbName" : "dbiDsn=dbi:Pg:dbname=$dbName;host=$host";
+  my $dbiDsn = $dbVendor eq 'Oracle'? "dbi:Oracle:$dbName" : "dbi:Pg:dbname=$dbName;host=$dbHost";
 
   return DBI->connect($dbiDsn,
 		      $dbLogin,
