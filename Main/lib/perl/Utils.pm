@@ -73,6 +73,7 @@ sub runSqlPostgres {
   my $connectionString = "postgresql://$login:$password\@$dbHostname/$dbName";
   
   my $cmd;
+
   if (!$allowFailures) { $psql_params = "-v ON_ERROR_STOP=1"; }
 
   if (scalar @params > 0) {
@@ -86,7 +87,9 @@ sub runSqlPostgres {
     $psql_params = "$psql_params " . join(" ", @paramsFull);
   }
 
-  $cmd = "psql --echo-all -f $fullFile $psql_params $connectionString";
+  # $cmd = "psql --echo-all -f $fullFile $psql_params $connectionString";
+  $cmd = "echo 'BEGIN; SET ROLE GUS_W; \\i $fullFile \\\\ END;' | psql --echo-all $psql_params $connectionString";
+
   print STDOUT "\n==============================================================\n";
   print STDOUT "Running $fullFile\n";
   print STDOUT "==============================================================\n";
