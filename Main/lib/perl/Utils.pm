@@ -88,7 +88,7 @@ sub runSqlPostgres {
   }
 
   # $cmd = "psql --echo-all -f $fullFile $psql_params $connectionString";
-  $cmd = "echo 'BEGIN; SET ROLE GUS_W; \\i $fullFile \\\\ END;' | psql --echo-all $psql_params $connectionString";
+  $cmd = "/bin/echo 'BEGIN; SET ROLE GUS_W; \\i $fullFile \\\\ END;' | psql --echo-all $psql_params $connectionString";
 
   print STDOUT "\n==============================================================\n";
   print STDOUT "Running $fullFile\n";
