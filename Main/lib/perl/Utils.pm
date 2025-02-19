@@ -1,22 +1,22 @@
-package SchemaInstallUtils::Main::Utils; 
+package SchemaInstallUtils::Main::Utils;
 
 use Exporter;
 use DBI;
 
-our @ISA= qw( Exporter );
-our @EXPORT = qw( runSql dropSchemaSetTables dropSchemaSetPostgres getDbh );
+our @ISA = qw(Exporter);
+our @EXPORT = qw(runSql dropSchemaSetTables dropSchemaSetPostgres getDbh);
 
 sub getDbh {
   my ($dbName, $dbHost, $dbVendor, $dbLogin, $dbPassword) = @_;
 
   die "illegal dbVendor: $dbVendor" unless $dbVendor eq 'Oracle' || $dbVendor eq 'Postgres';
 
-  my $dbiDsn = $dbVendor eq 'Oracle'? "dbi:Oracle:$dbName" : "dbi:Pg:dbname=$dbName;host=$dbHost";
+  my $dbiDsn = $dbVendor eq 'Oracle' ? "dbi:Oracle:$dbName" : "dbi:Pg:dbname=$dbName;host=$dbHost";
 
   return DBI->connect($dbiDsn,
-		      $dbLogin,
-		      $dbPassword,
-		      { PrintError => 1, RaiseError => 0})
+    $dbLogin,
+    $dbPassword,
+    { PrintError => 1, RaiseError => 0 })
     or die "Can't connect to database: $DBI::errstr\n";
 }
 
@@ -27,9 +27,11 @@ sub runSql {
 
   if (lc $dbVendor eq 'oracle') {
     &runSqlOracle($login, $password, $dbh->{Name}, $filePath, $allowFailures, @params);
-  } elsif (lc $dbVendor eq 'postgres') {
+  }
+  elsif (lc $dbVendor eq 'postgres') {
     &runSqlPostgres($login, $password, $dbh->{pg_db}, $dbh->{pg_host}, $filePath, $allowFailures, @params);
-  } else { 
+  }
+  else {
     die "Unsupported dbVendor:$dbVendor.";
   }
 }
@@ -37,12 +39,12 @@ sub runSql {
 sub runSqlOracle {
   my ($login, $password, $dbName, $fullFile, $allowFailures, @params) = @_;
 
-  my $tmpFile = "/tmp/$file.$$";  # append the process id
-  unlink($tmpFile);  # in case of a old one
+  my $tmpFile = "/tmp/$fullFile.$$"; # append the process id
+  unlink($tmpFile);                  # in case of a old one
   my $cmd;
   if (!$allowFailures) {
-      $cmd = "echo 'whenever sqlerror exit sql.sqlcode;' > $tmpFile";
-      runCmd($cmd, $tmpFile);
+    $cmd = "echo 'whenever sqlerror exit sql.sqlcode;' > $tmpFile";
+    runCmd($cmd, $tmpFile);
   }
   $cmd = "echo 'set echo on;' >> $tmpFile";
   runCmd($cmd, $tmpFile);
@@ -50,8 +52,8 @@ sub runSqlOracle {
   # Turn off the default parameter concat character, which is a period. (Otherwise we'd have to use '&1.' as the parameter macro.)
   # Because we assume, for now, that our parameters are always schema names, their placement is always followed by white space or a period,
   # which is not a valid parameter character, effectively terminating the parameter macro, so we don't need a concat character.
- # $cmd = "echo 'set concat off;' >> $tmpFile";
- # runCmd($cmd, $tmpFile);
+  # $cmd = "echo 'set concat off;' >> $tmpFile";
+  # runCmd($cmd, $tmpFile);
 
   $cmd = "cat $fullFile >> $tmpFile";
   runCmd($cmd, $tmpFile);
@@ -68,18 +70,18 @@ sub runSqlOracle {
 
 sub runSqlPostgres {
   my ($login, $password, $dbName, $dbHostname, $fullFile, $allowFailures, @params) = @_;
-  
+
   my $psql_params = "";
   my $connectionString = "postgresql://$login:$password\@$dbHostname/$dbName";
-  
+
   my $cmd;
 
-  if (!$allowFailures) { $psql_params = "-v ON_ERROR_STOP=1"; }
+  if (!$allowFailures) {$psql_params = "-v ON_ERROR_STOP=1";}
 
   if (scalar @params > 0) {
     my @paramsFull;
-    for(my $i = 0; $i < scalar @params; $i++) {
-      my $n = $i +1;
+    for (my $i = 0; $i < scalar @params; $i++) {
+      my $n = $i + 1;
       my $p = "VAR${n}";
       push @paramsFull, "-v ${p}=$params[$i]";
     }
@@ -98,20 +100,20 @@ sub runSqlPostgres {
 }
 
 sub runCmd {
-    my ($cmd, $tmpFile) = @_;
-    #print STDERR "\nrunning command: $cmd\n";
-    system($cmd);
-    my $status = $? >> 8;
-    if ($status) {
-      unlink($tmpFile) if $cmd =~ /^sqlplus/;
-      die "Failed with status '$status' running cmd: \n$cmd\n";
-    }
+  my ($cmd, $tmpFile) = @_;
+  #print STDERR "\nrunning command: $cmd\n";
+  system($cmd);
+  my $status = $? >> 8;
+  if ($status) {
+    unlink($tmpFile) if $cmd =~ /^sqlplus/;
+    die "Failed with status '$status' running cmd: \n$cmd\n";
+  }
 }
 
 sub dropSchemaSetTables {
   my ($dbh, $schemaSet) = @_;
 
-  print STDERR "\nFixing to drop objects in schema set \"$schemaSet\"\n";
+  print STDOUT "\nFixing to drop objects in schema set \"$schemaSet\"\n";
 
   # drop everything
   my $stmt = $dbh->prepare(<<SQL);
@@ -125,13 +127,14 @@ SQL
   my $objectsToDrop = 1;
   my $count = 0;
   while ($objectsToDrop) {
-    $stmt->execute() or print STDERR "\n" . $dbh->errstr . "\n";
+    $stmt->execute() or print STDOUT "\n" . $dbh->errstr . "\n";
 
     if (my ($dropStmtSql) = $stmt->fetchrow_array()) {
-      print STDERR "running statement: $dropStmtSql\n";
+      print STDOUT "running statement: $dropStmtSql\n";
       $dbh->do($dropStmtSql) or die "Can't fetch a drop statement: $DBI::errstr\n";
       $count += 1;
-    } else {
+    }
+    else {
       $objectsToDrop = 0;
     }
   }
@@ -141,7 +144,7 @@ SQL
 sub dropSchemaSetOracle {
   my ($dbh, $schemaSet) = @_;
 
-  print STDERR "\nFixing to drop schemas in set \"$schemaSet\"\n";
+  print STDOUT "\nFixing to drop schemas in set \"$schemaSet\"\n";
 
   my $stmt = $dbh->prepare(<<SQL);
     select 'drop user ' || username || ' cascade'
@@ -149,10 +152,10 @@ sub dropSchemaSetOracle {
     where username in ($schemaSet)
 SQL
 
-  $stmt->execute() or print STDERR "\n" . $dbh->errstr . "\n";
+  $stmt->execute() or print STDOUT "\n" . $dbh->errstr . "\n";
   my $count = 0;
   while (my ($dropStmtSql) = $stmt->fetchrow_array()) {
-    print STDERR "\nrunning statement: $dropStmtSql\n";
+    print STDOUT "\nrunning statement: $dropStmtSql\n";
     $dbh->do($dropStmtSql) or die "Can't fetch a drop statement: $DBI::errstr\n";
     $count++;
   }
@@ -162,23 +165,17 @@ SQL
 sub dropSchemaSetPostgres {
   my ($dbh, @schemaSet) = @_;
 
-  print STDERR "\nFixing to drop schemas in set \"@schemaSet\"\n";
+  print STDOUT "\nFixing to drop schemas in set \"@schemaSet\"\n";
 
+  my $count;
   for my $schema (@schemaSet) {
-    my $stmt = $dbh->prepare(<<SQL);
-    DROP SCHEMA $schema CASCADE;
-SQL
-
-    $stmt->execute() or print STDERR "\n" . $dbh->errstr . "\n";
-
-    my $count = 0;
-    while (my ($dropStmtSql) = $stmt->fetchrow_array()) {
-      print STDERR "\nrunning statement: $dropStmtSql\n";
-      $dbh->do($dropStmtSql) or die "Can't fetch a drop statement: $DBI::errstr\n";
-      $count++;
-    }
-    return $count;
+    my $s = "DROP SCHEMA $schema CASCADE";
+    print STDOUT "\nrunning statement: $s\n";
+    my $success = $dbh->do($s);
+    print STDOUT $success ? "Succeeded\n" : "Failed\n";
+    $count += $success ? 1 : 0;
   }
+  return $count;
 }
 
 1;
