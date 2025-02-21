@@ -1,5 +1,6 @@
 package SchemaInstallUtils::Main::Utils;
 
+use strict;
 use Exporter;
 use DBI;
 
@@ -21,7 +22,7 @@ sub getDbh {
 }
 
 sub runSql {
-  my ($login, $password, $dbh, $dbVendor, $filePath, $allowFailures, @params) = @_;
+  my ($login, $password, $dbh, $dbVendor, $filePath, $allowFailures, @params, $runAsRole) = @_;
 
   -e $filePath || die "File '$filePath' does not exist\n";
 
@@ -29,7 +30,7 @@ sub runSql {
     &runSqlOracle($login, $password, $dbh->{Name}, $filePath, $allowFailures, @params);
   }
   elsif (lc $dbVendor eq 'postgres') {
-    &runSqlPostgres($login, $password, $dbh->{pg_db}, $dbh->{pg_host}, $filePath, $allowFailures, @params);
+    &runSqlPostgres($login, $password, $dbh->{pg_db}, $dbh->{pg_host}, $filePath, $allowFailures, @params, $runAsRole);
   }
   else {
     die "Unsupported dbVendor:$dbVendor.";
@@ -69,10 +70,13 @@ sub runSqlOracle {
 }
 
 sub runSqlPostgres {
-  my ($login, $password, $dbName, $dbHostname, $fullFile, $allowFailures, @params) = @_;
+  my ($login, $password, $dbName, $dbHostname, $fullFile, $allowFailures, @params, $runAsRole) = @_;
 
   my $psql_params = "";
   my $connectionString = "postgresql://$login:$password\@$dbHostname/$dbName";
+
+  my $role = "GUS_W";
+  $role = $runAsRole if defined $runAsRole;
 
   my $cmd;
 
@@ -90,7 +94,7 @@ sub runSqlPostgres {
   }
 
   # $cmd = "psql --echo-all -f $fullFile $psql_params $connectionString";
-  $cmd = "/bin/echo 'BEGIN; SET ROLE GUS_W; \\i $fullFile \\\\ END;' | psql --echo-all $psql_params $connectionString";
+  $cmd = "/bin/echo 'BEGIN; SET ROLE $role; \\i $fullFile \\\\ END;' | psql --echo-all $psql_params $connectionString";
 
   print STDOUT "\n==============================================================\n";
   print STDOUT "Running $fullFile\n";
