@@ -22,7 +22,7 @@ sub getDbh {
 }
 
 sub runSql {
-  my ($login, $password, $dbh, $dbVendor, $filePath, $allowFailures, @params, $runAsRole) = @_;
+  my ($login, $password, $dbh, $dbVendor, $filePath, $allowFailures, $runAsRole, @params) = @_;
 
   -e $filePath || die "File '$filePath' does not exist\n";
 
@@ -30,7 +30,7 @@ sub runSql {
     &runSqlOracle($login, $password, $dbh->{Name}, $filePath, $allowFailures, @params);
   }
   elsif (lc $dbVendor eq 'postgres') {
-    &runSqlPostgres($login, $password, $dbh->{pg_db}, $dbh->{pg_host}, $filePath, $allowFailures, @params, $runAsRole);
+    &runSqlPostgres($login, $password, $dbh->{pg_db}, $dbh->{pg_host}, $filePath, $allowFailures, $runAsRole, @params);
   }
   else {
     die "Unsupported dbVendor:$dbVendor.";
@@ -70,7 +70,7 @@ sub runSqlOracle {
 }
 
 sub runSqlPostgres {
-  my ($login, $password, $dbName, $dbHostname, $fullFile, $allowFailures, @params, $runAsRole) = @_;
+  my ($login, $password, $dbName, $dbHostname, $fullFile, $allowFailures, $runAsRole, @params) = @_;
 
   my $psql_params = "";
   my $connectionString = "postgresql://$login:$password\@$dbHostname/$dbName";
